@@ -315,7 +315,7 @@ class XiaomiGateway:
                         "data": _list2map(_get_value(resp)),
                         "raw_data": resp}
                     self.devices[device_type].append(xiaomi_device)
-                    if not model in ['gateway', 'gateway.v3']:
+                    if (device_type in ['sensor', 'binary_sensor']) and (not model in ['gateway', 'gateway.v3']):
                         self.sensors.append(xiaomi_device)
                     _LOGGER.debug('Registering device %s, %s as: %s',
                                   sid, model, device_type)
