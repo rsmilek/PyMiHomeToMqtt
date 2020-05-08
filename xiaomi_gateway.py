@@ -229,7 +229,7 @@ class XiaomiGateway:
         self.token = None
         self._discovery_retries = discovery_retries
         self._interface = interface
-        self.sensors = []
+        self.sensors = defaultdict(list)
 
         if proto is None:
             cmd = '{"cmd":"read","sid":"' + sid + '"}'
@@ -316,7 +316,8 @@ class XiaomiGateway:
                         "raw_data": resp}
                     self.devices[device_type].append(xiaomi_device)
                     if (device_type in ['sensor', 'binary_sensor']) and (not model in ['gateway', 'gateway.v3']):
-                        self.sensors.append(xiaomi_device)
+                        sid = xiaomi_device.get('sid')
+                        self.sensors[sid].append(xiaomi_device)
                     _LOGGER.debug('Registering device %s, %s as: %s',
                                   sid, model, device_type)
 

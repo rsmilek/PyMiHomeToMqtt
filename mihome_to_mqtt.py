@@ -29,10 +29,15 @@ gwd.discover_gateways()
 #         print('***')
 #         print(f'{device_type} - {xiaomi_device}')
 
+# for host, gw in gwd.gateways.items():
+#     for device in gw.sensors:
+#         print('***')
+#         print(device)
+
 for host, gw in gwd.gateways.items():
-    for device in gw.sensors:
+    for sid, sensor in gw.sensors.items():
         print('***')
-        print(device)
+        print(f'{sid} - {sensor}')
 
 
 # gwd.listen()
