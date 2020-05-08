@@ -1,4 +1,5 @@
 """Library to handle connection with Xiaomi Gateway"""
+import time
 import socket
 import json
 import logging
@@ -87,11 +88,14 @@ class XiaomiGatewayDiscovery:
                     "Could not resolve %s: %s", host, error)
 
         try:
+            # _socket.sendto('{"cmd":"whois"}'.encode(),
+            #                (self.MULTICAST_ADDRESS, self.GATEWAY_DISCOVERY_PORT))
             _socket.sendto('{"cmd":"whois"}'.encode(),
-                           (self.MULTICAST_ADDRESS, self.GATEWAY_DISCOVERY_PORT))
+                           ('10.3.141.20', self.GATEWAY_DISCOVERY_PORT))
 
             while True:
                 data, (ip_add, _) = _socket.recvfrom(self.SOCKET_BUFSIZE)
+                _LOGGER.debug(data)
                 if len(data) is None or ip_add in self.gateways:
                     continue
 
@@ -196,9 +200,12 @@ class XiaomiGatewayDiscovery:
                 cmd = data['cmd']
                 if cmd == 'heartbeat' and data['model'] in GATEWAY_MODELS:
                     gateway.token = data['token']
+
+                    _LOGGER.info('HEARTBEAT', data)
+
                 elif cmd in ('report', 'heartbeat'):
                     _LOGGER.debug('MCAST (%s) << %s', cmd, data)
-                    self.callback_func(gateway.push_data, data)
+                    # self.callback_func(gateway.push_data, data)
                 else:
                     _LOGGER.error('Unknown multicast data: %s', data)
             # pylint: disable=broad-except
@@ -498,5 +505,7 @@ gw_config = {
 
 gwd = XiaomiGatewayDiscovery(lambda: None, [gw_config], 'any')
 gwd.discover_gateways()
-# gwd.listen()
-# gwd._listen_to_msg()
+gwd.listen()
+while True:
+    print("This prints once a minute.")
+    time.sleep(60)  # Delay for 1 minute (60 seconds).
