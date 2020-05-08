@@ -199,12 +199,11 @@ class XiaomiGatewayDiscovery:
                 cmd = data['cmd']
                 if cmd == 'heartbeat' and data['model'] in GATEWAY_MODELS:
                     gateway.token = data['token']
-
                     _LOGGER.info('HEARTBEAT', data)
-
                 elif cmd in ('report', 'heartbeat'):
                     _LOGGER.debug('MCAST (%s) << %s', cmd, data)
-                    # self.callback_func(gateway.push_data, data)
+                    if self.callback_func != None:
+                        self.callback_func(gateway.push_data, data)
                 else:
                     _LOGGER.error('Unknown multicast data: %s', data)
             # pylint: disable=broad-except

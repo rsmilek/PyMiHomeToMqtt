@@ -11,8 +11,21 @@ gw_config = {
 
 gws_config = [gw_config]
 
-gwd = XiaomiGatewayDiscovery(lambda: None, [gw_config], 'any')
+
+def report_callback(push_data, data):
+    print(f'REPORT - {data}')
+
+
+gwd = XiaomiGatewayDiscovery(report_callback, [gw_config], 'any')
 gwd.discover_gateways()
+
+for host, gw in gwd.gateways.items():
+    for sid, sensor in gw.sensors.items():
+        print('***')
+        print(f'{sid} - {sensor}')
+gwd.listen()
+while True:
+    time.sleep(10)
 
 
 # for config in gws_config:
@@ -33,12 +46,6 @@ gwd.discover_gateways()
 #     for device in gw.sensors:
 #         print('***')
 #         print(device)
-
-for host, gw in gwd.gateways.items():
-    for sid, sensor in gw.sensors.items():
-        print('***')
-        print(f'{sid} - {sensor}')
-
 
 # gwd.listen()
 # while True:
