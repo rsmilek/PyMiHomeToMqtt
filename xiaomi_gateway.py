@@ -56,7 +56,7 @@ class XiaomiGatewayDiscovery:
         """Discover gateways using multicast"""
 
         _socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        _socket.settimeout(5.0)
+        _socket.settimeout(3.0)
         if self._interface != 'any':
             _socket.bind((self._interface, 0))
 

@@ -13,5 +13,9 @@ gwd = XiaomiGatewayDiscovery(lambda: None, [gw_config], 'any')
 gwd.discover_gateways()
 gwd.listen()
 while True:
-    print("This prints once a minute.")
-    time.sleep(60)  # Delay for 1 minute (60 seconds).
+    time.sleep(20)
+    gwd.stop_listen()
+    while gwd._listening:
+        time.sleep(1)
+    gwd.discover_gateways()
+    gwd.listen()
