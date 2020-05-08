@@ -229,6 +229,7 @@ class XiaomiGateway:
         self.token = None
         self._discovery_retries = discovery_retries
         self._interface = interface
+        self.sensors = []
 
         if proto is None:
             cmd = '{"cmd":"read","sid":"' + sid + '"}'
@@ -314,6 +315,8 @@ class XiaomiGateway:
                         "data": _list2map(_get_value(resp)),
                         "raw_data": resp}
                     self.devices[device_type].append(xiaomi_device)
+                    if not model in ['gateway', 'gateway.v3']:
+                        self.sensors.append(xiaomi_device)
                     _LOGGER.debug('Registering device %s, %s as: %s',
                                   sid, model, device_type)
 
