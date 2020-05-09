@@ -1,22 +1,37 @@
 import time
+import json
 from xiaomi_gateway import XiaomiGatewayDiscovery
 
-gw_config = {
-    # 'disable': 'false',
-    'host': '10.3.141.20',
-    'port': '9898',
-    'sid': '7811dcfb0bc6',
-    'key': 'fd27vp05jmnngcz2'
-}
-
-gws_config = [gw_config]
-
-
-def report_callback(push_data, data):
-    print(f'REPORT - {data}')
+gateways_config = [
+    {
+        # 'disable': 'false',
+        'host': '10.3.141.20',
+        'port': '9898',
+        'sid': '7811dcfb0bc6',
+        'key': 'fd27vp05jmnngcz2'
+    }
+]
 
 
-gwd = XiaomiGatewayDiscovery(report_callback, [gw_config], 'any')
+def report_callback(push_data, report):
+    # POZOR: PORAD TAM JDOU DATA I Z GATEWAY !!!
+    print(f'REPORT - {report}')
+    if ((report is None) or not ('cmd' in report) or not ('sid' in report) or not ('data' in report)) or (report['cmd'] != 'report'):
+        print(f'INVALID REPORT: {report}')
+        exit
+    try:
+        data = json.loads(report['data'])
+        for key, value in data.items():
+            print(key)
+            print(value)
+    except Exception as inst:
+        print(type(inst))    # the exception instance
+        print(inst.args)     # arguments stored in .args
+        # __str__ allows args to be printed directly, but may be overridden in exception subclasses
+        print(inst)
+
+
+gwd = XiaomiGatewayDiscovery(report_callback, gateways_config, 'any')
 gwd.discover_gateways()
 
 for host, gw in gwd.gateways.items():
