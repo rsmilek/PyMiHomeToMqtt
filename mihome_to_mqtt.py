@@ -15,6 +15,8 @@ gateways_config = [
 
 def report_callback(push_data, report):
     # POZOR: PORAD TAM JDOU DATA I Z GATEWAY !!!
+    # REPORT - {'cmd': 'report', 'model': 'gateway', 'sid': '7811dcfb0bc6', 'short_id': 0, 'data': '{"rgb":0,"illumination":1117}'}
+    # UNKNOWN DEVICE sid = 7811dcfb0bc6
     if ((report is None) or not ('cmd' in report) or not ('sid' in report) or not ('data' in report)) or not (report['cmd'] in ['report', 'heartbeat']):
         print(f'REPORT INVALID: {report}')
         return
@@ -22,21 +24,17 @@ def report_callback(push_data, report):
         print(f'REPORT - {report}')
         sensor_id = report['sid']
         data_report = json.loads(report['data'])
-        for key, value in data_report.items():
-            # print(f'report data: key = {key} : value = {value}')
-            for _, gateway in mihome.gateways.items():
-                if not sensor_id in gateway.sensors:
-                    print(f'UNKNOWN DEVICE sid = {sensor_id}')
-                    return
-                sensor = gateway.sensors[sensor_id]
-                data = sensor['data']
-                print(f'sensor data = {data}')
-                data[key] = value
-                print(f'sensor data new = {sensor["data"]}')
-        # info = {}
-        #     info[key] = value
-        # print(f'info = {info}')
-
+        # Update device data from given report
+        for _, gateway in mihome.gateways.items():
+            if not sensor_id in gateway.sensors:
+                print(f'UNKNOWN DEVICE sid = {sensor_id}')
+            else:
+                for key, value in data_report.items():
+                    sensor = gateway.sensors[sensor_id]
+                    data = sensor['data']
+                    print(f'sensor data = {data}')
+                    data[key] = value
+                    print(f'sensor data new = {sensor["data"]}')
     except Exception as inst:
         print(type(inst))    # the exception instance
         print(inst.args)     # arguments stored in .args
@@ -46,10 +44,9 @@ def report_callback(push_data, report):
 
 mihome = XiaomiGatewayDiscovery(report_callback, gateways_config, 'any')
 mihome.discover_gateways()
-
 for host, gateway in mihome.gateways.items():
+    print('SENSORS DISCOVERED:')
     for sensor_id, sensor in gateway.sensors.items():
-        print('***')
         print(f'{sensor_id} - {sensor}')
 mihome.listen()
 while True:
