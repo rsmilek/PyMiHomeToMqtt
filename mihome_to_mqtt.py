@@ -15,15 +15,25 @@ gateways_config = [
 
 def report_callback(push_data, report):
     # POZOR: PORAD TAM JDOU DATA I Z GATEWAY !!!
-    print(f'REPORT - {report}')
-    if ((report is None) or not ('cmd' in report) or not ('sid' in report) or not ('data' in report)) or (report['cmd'] != 'report'):
-        print(f'INVALID REPORT: {report}')
-        exit
+    if ((report is None) or not ('cmd' in report) or not ('sid' in report) or not ('data' in report)) or not (report['cmd'] in ['report', 'heartbeat']):
+        print(f'REPORT INVALID: {report}')
+        return
     try:
-        data = json.loads(report['data'])
-        for key, value in data.items():
-            print(key)
-            print(value)
+        sid = report['sid']
+        print(f'REPORT - {report}')
+        data_report = json.loads(report['data'])
+        for key, value in data_report.items():
+            # print(f'report data: key = {key} : value = {value}')
+            for _, gw in gwd.gateways.items():
+                if not sid in gw.sensors:
+                    print(f'UNKNOWN DEVICE sid = {sid}')
+                    return
+                sensor = gw.sensors[sid]
+                data = sensor['data']
+                print(f'sensor data = {data}')
+                data[key] = value
+                print(f'sensor data new = {sensor["data"]}')
+
     except Exception as inst:
         print(type(inst))    # the exception instance
         print(inst.args)     # arguments stored in .args

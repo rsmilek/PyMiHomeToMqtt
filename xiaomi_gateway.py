@@ -316,7 +316,7 @@ class XiaomiGateway:
                     self.devices[device_type].append(xiaomi_device)
                     if (device_type in ['sensor', 'binary_sensor']) and (not model in ['gateway', 'gateway.v3']):
                         sid = xiaomi_device.get('sid')
-                        self.sensors[sid].append(xiaomi_device)
+                        self.sensors[sid] = xiaomi_device
                     _LOGGER.debug('Registering device %s, %s as: %s',
                                   sid, model, device_type)
 
