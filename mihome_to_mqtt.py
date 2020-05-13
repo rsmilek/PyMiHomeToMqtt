@@ -1,3 +1,4 @@
+import datetime
 import time
 import json
 from xiaomi_gateway import XiaomiGatewayDiscovery
@@ -29,12 +30,19 @@ def report_callback(push_data, report):
             if not sensor_id in gateway.sensors:
                 print(f'UNKNOWN DEVICE sid = {sensor_id}')
             else:
+                sensor = gateway.sensors[sensor_id]
+                data = sensor['data']
+                print(f'sensor data = {data}')
                 for key, value in data_report.items():
-                    sensor = gateway.sensors[sensor_id]
-                    data = sensor['data']
-                    print(f'sensor data = {data}')
                     data[key] = value
-                    print(f'sensor data new = {sensor["data"]}')
+                    if key == 'status' and value == 'open':
+                        now = datetime.datetime.now()
+                        data['lastopen'] = now.strftime("%Y-%m-%d %H:%M:%S")
+                print(f'sensor data new = {sensor["data"]}')
+                info = {}
+                for key, value in data.items():
+                    info[key] = value
+                print(f'{info}')
                 topic = f'mihome/{sensor.get("model")}/{gateway.sid}/{sensor.get("sid")}'
                 print(topic)
     except Exception as inst:
