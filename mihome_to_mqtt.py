@@ -35,6 +35,8 @@ def report_callback(push_data, report):
                     print(f'sensor data = {data}')
                     data[key] = value
                     print(f'sensor data new = {sensor["data"]}')
+                topic = f'mihome/{sensor.get("model")}/{gateway.sid}/{sensor.get("sid")}'
+                print(topic)
     except Exception as inst:
         print(type(inst))    # the exception instance
         print(inst.args)     # arguments stored in .args
