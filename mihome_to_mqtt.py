@@ -19,20 +19,23 @@ def report_callback(push_data, report):
         print(f'REPORT INVALID: {report}')
         return
     try:
-        sid = report['sid']
         print(f'REPORT - {report}')
+        sensor_id = report['sid']
         data_report = json.loads(report['data'])
         for key, value in data_report.items():
             # print(f'report data: key = {key} : value = {value}')
-            for _, gw in gwd.gateways.items():
-                if not sid in gw.sensors:
-                    print(f'UNKNOWN DEVICE sid = {sid}')
+            for _, gateway in mihome.gateways.items():
+                if not sensor_id in gateway.sensors:
+                    print(f'UNKNOWN DEVICE sid = {sensor_id}')
                     return
-                sensor = gw.sensors[sid]
+                sensor = gateway.sensors[sensor_id]
                 data = sensor['data']
                 print(f'sensor data = {data}')
                 data[key] = value
                 print(f'sensor data new = {sensor["data"]}')
+        # info = {}
+        #     info[key] = value
+        # print(f'info = {info}')
 
     except Exception as inst:
         print(type(inst))    # the exception instance
@@ -41,14 +44,14 @@ def report_callback(push_data, report):
         print(inst)
 
 
-gwd = XiaomiGatewayDiscovery(report_callback, gateways_config, 'any')
-gwd.discover_gateways()
+mihome = XiaomiGatewayDiscovery(report_callback, gateways_config, 'any')
+mihome.discover_gateways()
 
-for host, gw in gwd.gateways.items():
-    for sid, sensor in gw.sensors.items():
+for host, gateway in mihome.gateways.items():
+    for sensor_id, sensor in gateway.sensors.items():
         print('***')
-        print(f'{sid} - {sensor}')
-gwd.listen()
+        print(f'{sensor_id} - {sensor}')
+mihome.listen()
 while True:
     time.sleep(10)
 
