@@ -1,6 +1,7 @@
 import datetime
 import time
 import json
+import paho.mqtt.client as mqtt
 from xiaomi_gateway import XiaomiGatewayDiscovery
 
 gateways_config = [
@@ -48,19 +49,29 @@ def report_callback(push_data, report):
     except Exception as inst:
         print(type(inst))    # the exception instance
         print(inst.args)     # arguments stored in .args
-        # __str__ allows args to be printed directly, but may be overridden in exception subclasses
-        print(inst)
+        print(inst)          # __str__ allows args to be printed directly, but may be overridden in exception subclasses
 
 
-mihome = XiaomiGatewayDiscovery(report_callback, gateways_config, 'any')
-mihome.discover_gateways()
-for host, gateway in mihome.gateways.items():
-    print('SENSORS DISCOVERED:')
-    for sensor_id, sensor in gateway.sensors.items():
-        print(f'{sensor_id} - {sensor}')
-mihome.listen()
-while True:
-    time.sleep(10)
+now = datetime.datetime.now()
+client = mqtt.Client("mihome_to_mqtt_" + now.strftime("%Y-%m-%d_%H:%M:%S"))
+client.connect("localhost")
+client.publish("pokus/state", 'ARMED_HOME')  # ARMED_HOME,ARMED_AWAY,UNARMED
+client.publish("mihome/sensor_ht/7811dcfb0bc6/158d00033b391f",
+               '{"voltage":1111,"temperature":"2449","humidity":"4814"}')
+client.publish("mihome/magnet/7811dcfb0bc6/158d0003033b82",
+               '{"voltage":2222,"status":"open"}')
+client.disconnect()
+
+
+# mihome = XiaomiGatewayDiscovery(report_callback, gateways_config, 'any')
+# mihome.discover_gateways()
+# for host, gateway in mihome.gateways.items():
+#     print('SENSORS DISCOVERED:')
+#     for sensor_id, sensor in gateway.sensors.items():
+#         print(f'{sensor_id} - {sensor}')
+# mihome.listen()
+# while True:
+#     time.sleep(10)
 
 
 # for config in gws_config:
