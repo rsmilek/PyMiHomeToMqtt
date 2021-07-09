@@ -14,17 +14,38 @@ gateways_config = [
     }
 ]
 
+def parse_data(data, data_mqtt):
+    for key in data:
+        value = data[key]
+        # XiaomiDevice
+        if key in ['voltage', "battery_voltage"]:
+            data_mqtt['voltage'] = round(value / 1000.0, 3)
+        # XiaomiSensor
+        elif key in ["status"]:
+            if value == "close":
+                data_mqtt[key] = 1
+            else:
+                data_mqtt[key] = 0
+        elif key in ["temperature", "humidity", "pressure"]:
+            data_mqtt[key] = float(value) / 100
+        # General
+        else:
+            data_mqtt[key] = value
 
-def sensor_data_to_mqtt(gateway, sensor):
+
+def publish_sensor_data_to_mqtt(gateway, sensor):
     now = datetime.datetime.now()
     client = mqtt.Client("mihome_to_mqtt_" + now.strftime("%Y-%m-%d_%H:%M:%S"))
     client.connect("localhost")
     topic = f'mihome/{sensor.get("model")}/{gateway.sid}/{sensor.get("sid")}'
     data = sensor['data']
-    data_str = json.dumps(data)
+    data_mqtt = {}
+    parse_data(data, data_mqtt)
+    data_str = json.dumps(data_mqtt)
     print(f'MQTT {client._bind_address} {topic} {data_str}')
     client.publish(topic, data_str)
     client.disconnect()
+    time.sleep(3)
 
 
 def update_sensor_data(gateway, sensor, data_report, is_report=False):
@@ -36,7 +57,7 @@ def update_sensor_data(gateway, sensor, data_report, is_report=False):
     for key, value in data_report.items():
         data[key] = value
     print(f'sensor data new = {sensor["data"]}')
-    sensor_data_to_mqtt(gateway, sensor)
+    publish_sensor_data_to_mqtt(gateway, sensor)
 
 
 def report_callback(push_data, report):
@@ -57,35 +78,10 @@ def report_callback(push_data, report):
             else:
                 sensor = gateway.sensors[sensor_id]
                 update_sensor_data(gateway, sensor, data_report, True)
-                # data = sensor['data']
-                # print(f'sensor data = {data}')
-                # for key, value in data_report.items():
-                #     data[key] = value
-                #     if key == 'status':
-                #         now = datetime.datetime.now()
-                #         data['changed'] = now.strftime("%Y-%m-%d %H:%M:%S")
-                # print(f'sensor data new = {sensor["data"]}')
-                # info = {}
-                # for key, value in data.items():
-                #     info[key] = value
-                # print(f'{info}')
-                # topic = f'mihome/{sensor.get("model")}/{gateway.sid}/{sensor.get("sid")}'
-                # print(topic)
     except Exception as inst:
         print(type(inst))    # the exception instance
         print(inst.args)     # arguments stored in .args
         print(inst)          # __str__ allows args to be printed directly, but may be overridden in exception subclasses
-
-
-# now = datetime.datetime.now()
-# client = mqtt.Client("mihome_to_mqtt_" + now.strftime("%Y-%m-%d_%H:%M:%S"))
-# client.connect("localhost")
-# client.publish("pokus/state", 'ARMED_HOME')  # ARMED_HOME,ARMED_AWAY,UNARMED
-# client.publish("mihome/sensor_ht/7811dcfb0bc6/158d00033b391f",
-#                '{"voltage":1111,"temperature":"2449","humidity":"4814"}')
-# client.publish("mihome/magnet/7811dcfb0bc6/158d0003033b82",
-#                '{"voltage":2222,"status":"open"}')
-# client.disconnect()
 
 
 mihome = XiaomiGatewayDiscovery(report_callback, gateways_config, 'any')
@@ -96,9 +92,9 @@ for host, gateway in mihome.gateways.items():
         print(f'{sensor_id} - {sensor}')
 mihome.listen()
 while True:
-    time.sleep(15)
+    time.sleep(10)
     for host, gateway in mihome.gateways.items():
-        print(f'GATEWAY [{host}]: token: {gateway.token}')
+        print(f'---GATEWAY [{host}]: token: {gateway.token}')
         for sensor_id, sensor in gateway.sensors.items():
             cmd = '{"cmd":"read","sid":"' + sensor_id + '"}'
             resp = gateway._send_cmd(cmd, "read_ack") if int(
@@ -106,6 +102,8 @@ while True:
             if _validate_data(resp):
                 data_report = sensor['data']
                 update_sensor_data(gateway, sensor, data_report)
+
+
 
 # for config in gws_config:
 #     host = config.get('host')
