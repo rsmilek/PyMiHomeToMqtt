@@ -2,7 +2,10 @@ import datetime
 import time
 import json
 import paho.mqtt.client as mqtt
+import threading
 from xiaomi_gateway import XiaomiGatewayDiscovery, _validate_data
+
+MQTT_BROKER_URI = "localhost"
 
 gateways_config = [
     {
@@ -13,6 +16,8 @@ gateways_config = [
         'key': 'fd27vp05jmnngcz2'
     }
 ]
+
+lock = threading.Lock()
 
 def parse_data(data, data_mqtt):
     for key in data:
@@ -32,21 +37,21 @@ def parse_data(data, data_mqtt):
         else:
             data_mqtt[key] = value
 
-
 def publish_sensor_data_to_mqtt(gateway, sensor):
-    now = datetime.datetime.now()
-    client = mqtt.Client("mihome_to_mqtt_" + now.strftime("%Y-%m-%d_%H:%M:%S"))
-    client.connect("localhost")
-    topic = f'mihome/{sensor.get("model")}/{gateway.sid}/{sensor.get("sid")}'
-    data = sensor['data']
-    data_mqtt = {}
-    parse_data(data, data_mqtt)
-    data_str = json.dumps(data_mqtt)
-    print(f'MQTT {client._bind_address} {topic} {data_str}')
-    client.publish(topic, data_str)
-    client.disconnect()
-    time.sleep(3)
-
+    with lock:
+        now = datetime.datetime.now()
+        client = mqtt.Client("mihome_to_mqtt_" + now.strftime("%Y-%m-%d_%H:%M:%S"))
+        client.connect(MQTT_BROKER_URI)
+        topic = f'mihome/{sensor.get("model")}/{gateway.sid}/{sensor.get("sid")}'
+        data = sensor['data']
+        data_mqtt = {}
+        parse_data(data, data_mqtt)
+        data_str = json.dumps(data_mqtt)
+        print(f'MQTT {client._bind_address} {topic} {data_str}')
+        info = client.publish(topic, data_str)
+        info.wait_for_publish()
+        time.sleep(1) # Fixes OpenHAB MQTT Broker errors
+        client.disconnect()
 
 def update_sensor_data(gateway, sensor, data_report, is_report=False):
     data = sensor['data']
